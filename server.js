@@ -1,3 +1,6 @@
+import path from "path";
+import { fileURLToPath } from "url";
+
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
@@ -15,9 +18,19 @@ import globalError from "./middlewares/error.js";
 import authRouter from "./routes/authRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import meRouter from "./routes/meRoutes.js";
+import brandRouter from "./routes/brandRoutes.js";
+import categoryRouter from "./routes/categoryRoutes.js";
+import subCategoryRouter from "./routes/subCategoriesRoutes.js";
+import productRouter from "./routes/productRoutes.js";
+import cartRouter from "./routes/cartRoutes.js";
+import wishlistRouter from "./routes/wishlistRoutes.js";
+import reviewRouter from "./routes/reviewRoutes.js";
 
 // express app
 const app = express();
+
+// Use fileURLToPath to get the current directory path
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Global Middlewares
 app.use(helmet());
@@ -37,6 +50,7 @@ app.use("/api", limiter);
 app.use(cors());
 app.use(cookieParser());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "uploads")));
 
 // Data sanitization against NoSQL query injuction
 app.use((req, res, next) => {
@@ -76,6 +90,13 @@ app.use((req, res, next) => {
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users/me", meRouter);
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/brands", brandRouter);
+app.use("/api/v1/categories", categoryRouter);
+app.use("/api/v1/subcategories", subCategoryRouter);
+app.use("/api/v1/products", productRouter);
+app.use("/api/v1/cart", cartRouter);
+app.use("/api/v1/wishlist", wishlistRouter);
+app.use("/api/v1/reviews", reviewRouter);
 
 app.use(/.*/, (req, res, next) => {
   next(new ApiError(`Can't find this route ${req.originalUrl}`, 404));

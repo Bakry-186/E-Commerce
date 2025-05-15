@@ -43,7 +43,12 @@ const userSchema = new mongoose.Schema(
         postalCode: String,
       },
     ],
-
+    wishlist: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+      },
+    ],
     refreshTokens: [String],
   },
   { timestamps: true }

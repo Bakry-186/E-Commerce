@@ -40,10 +40,16 @@ export const createOne = (Model) =>
   });
 
 // Get specific document
-export const getOne = (Model) =>
+export const getOne = (Model, populateOpt) =>
   asyncHandler(async (req, res, next) => {
-    const doc = await Model.findById(req.params.id);
+    // Build query
+    let query = Model.findById(req.params.id);
 
+    if (populateOpt) {
+      query = query.populate(populateOpt);
+    }
+
+    const doc = await query;
     if (!doc) {
       return next(new ApiError("Document not found!", 404));
     }
