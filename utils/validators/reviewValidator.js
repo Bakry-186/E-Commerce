@@ -45,7 +45,16 @@ export const createReviewValidator = [
     .isMongoId()
     .withMessage("Invalid user ID format.")
     .notEmpty()
-    .withMessage("User ID is required."),
+    .withMessage("User ID is required.")
+    .custom(async (user, { req }) => {
+      const review = await Review.findOne({ user, product: req.body.product });
+      if (review)
+        throw new Error(
+          "You can't create more than one review for this product."
+        );
+
+      return true;
+    }),
 
   check("productId")
     .isMongoId()
