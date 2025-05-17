@@ -9,6 +9,7 @@ import cartRouter from "./cartRoutes.js";
 import wishlistRouter from "./wishlistRoutes.js";
 import reviewRouter from "./reviewRoutes.js";
 import couponRouter from "./couponRoutes.js";
+import orderRouter from "./orderRoutes.js";
 
 const mountRoutes = (app) => {
   app.use("/api/v1/auth", authRouter);
@@ -22,6 +23,7 @@ const mountRoutes = (app) => {
   app.use("/api/v1/wishlist", wishlistRouter);
   app.use("/api/v1/reviews", reviewRouter);
   app.use("/api/v1/coupons", couponRouter);
+  app.use("/api/v1/orders", orderRouter);
 };
 
 export default mountRoutes;
