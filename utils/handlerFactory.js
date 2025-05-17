@@ -28,6 +28,7 @@ export const updateOne = (Model) =>
       return next(new ApiError("Document not found!", 404));
     }
 
+    doc.save();
     res.status(200).json({ data: doc });
   });
 

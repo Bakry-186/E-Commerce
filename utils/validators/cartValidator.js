@@ -1,9 +1,8 @@
 import { check } from "express-validator";
-import mongoose from "mongoose";
 
 import validatorMiddleware from "../../middlewares/validator.js";
 import Product from "../../models/productModel.js";
-import Cart from "../../models/cartModel.js";
+import Coupon from "../../models/couponModel.js";
 
 export const cartItemIdValidator = [
   check("itemId").isMongoId().withMessage("Invalid Cart item ID format."),
@@ -64,4 +63,21 @@ export const updateCartValidator = [
     }),
 
   validatorMiddleware,
+];
+
+export const applyCouponValidator = [
+  check("coupon")
+    .notEmpty()
+    .withMessage("Coupon code is required.")
+    .isString()
+    .withMessage("Coupon code must be a string.")
+    .trim()
+    .custom(async (code) => {
+      const coupon = await Coupon.findOne({ code });
+      if (!coupon) throw new Error("Invalid coupon code.");
+
+      return true;
+    }),
+
+    validatorMiddleware,
 ];

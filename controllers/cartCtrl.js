@@ -3,13 +3,19 @@ import asyncHandler from "express-async-handler";
 import ApiError from "../utils/apiError.js";
 import Product from "../models/productModel.js";
 import Cart from "../models/cartModel.js";
+import Coupon from "../models/couponModel.js";
 
 // Calculate Total Cart Price
-const calculateTotalPrice = (cartItems) => {
-  return cartItems.reduce(
-    (total, item) => total + item.quantity * item.price,
+const calculateTotalPrice = (cart) => {
+  const total = cart.cartItems.reduce(
+    (sum, item) => sum + item.quantity * item.price,
     0
   );
+
+  cart.totalPrice = total;
+  cart.totalPriceAfterDiscount = undefined;
+
+  return total;
 };
 
 // @desc    Add product to cart
@@ -53,7 +59,7 @@ export const addProductToCart = asyncHandler(async (req, res, next) => {
     }
   }
 
-  cart.totalCartPrice = calculateTotalPrice(cart.cartItems);
+  cart.totalCartPrice = calculateTotalPrice(cart);
   await cart.save();
 
   res
@@ -102,7 +108,7 @@ export const updateCartItemQuantity = asyncHandler(async (req, res, next) => {
 
   let totalPrice = 0;
 
-  cart.totalCartPrice = calculateTotalPrice(cart.cartItems);
+  cart.totalCartPrice = calculateTotalPrice(cart);
   await cart.save();
 
   res.status(200).json({ numOfItems: cart.cartItems.length, data: cart });
@@ -138,10 +144,40 @@ export const deleteItem = asyncHandler(async (req, res, next) => {
     });
   }
 
-  updatedCart.totalCartPrice = calculateTotalPrice(updatedCart.cartItems);
+  updatedCart.totalCartPrice = calculateTotalPrice(updatedCart);
   await cart.save();
 
   res
     .status(200)
     .json({ numOfItems: updatedCart.cartItems.length, data: updatedCart });
+});
+
+// @desc    Apply coupon on cart
+// @route   PUT /api/v1/cart/applyCoupon
+// @access  Private/User
+export const applyCoupon = asyncHandler(async (req, res, next) => {
+  // 1) Get coupon based on coupon code
+  const coupon = await Coupon.findOne({
+    code: req.body.coupon,
+    expire: { $gt: Date.now() },
+  });
+  if (!coupon) return next(new ApiError("Coupon is invalid or expired.", 400));
+
+  // 2) Get logged user cart to get total cart price
+  const cart = await Cart.findOne({ user: req.user._id });
+
+  const totalPrice = cart.totalCartPrice;
+
+  // 3) Calculate price after priceAfterDiscount
+  const totalPriceAfterDiscount = (
+    totalPrice -
+    (totalPrice * coupon.discount) / 100
+  ).toFixed(2);
+
+  cart.totalPriceAfterDiscount = totalPriceAfterDiscount;
+  await cart.save();
+
+  res
+    .status(200)
+    .json({ numOfItems: cart.cartItems.length, data: cart });
 });

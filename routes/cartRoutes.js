@@ -6,12 +6,14 @@ import {
   deleteCart,
   updateCartItemQuantity,
   deleteItem,
+  applyCoupon,
 } from "../controllers/cartCtrl.js";
 
 import {
   cartItemIdValidator,
   createCartValidator,
   updateCartValidator,
+  applyCouponValidator,
 } from "../utils/validators/cartValidator.js";
 
 import verifyToken from "../middlewares/auth.js";
@@ -26,6 +28,8 @@ router
   .post(createCartValidator, addProductToCart)
   .get(getCart)
   .delete(deleteCart);
+
+router.put("/apply-coupon", applyCouponValidator, applyCoupon);
 
 router
   .route("/:itemId")
