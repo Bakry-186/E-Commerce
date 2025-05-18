@@ -5,6 +5,7 @@ import {
   getOrders,
   getOrder,
   updateOrderStatus,
+  createCheckoutSession,
 } from "../controllers/orderCtrl.js";
 
 import {
@@ -26,6 +27,13 @@ router.post(
   authorizeRoles("customer"),
   shippingAddressValidator,
   createCashOrder
+);
+
+router.post(
+  "/checkout-session/:cartId",
+  authorizeRoles("customer"),
+  shippingAddressValidator,
+  createCheckoutSession
 );
 
 router.get(

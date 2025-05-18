@@ -1,3 +1,4 @@
+import Stripe from "stripe";
 import asyncHandler from "express-async-handler";
 
 import {
@@ -12,6 +13,8 @@ import ApiError from "../utils/apiError.js";
 import Order from "../models/orderModel.js";
 import Cart from "../models/cartModel.js";
 import Product from "../models/productModel.js";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET);
 
 // @desc Create cash order
 // @route POST /api/v1/orders/cartId
@@ -77,11 +80,57 @@ export const updateOrderStatus = asyncHandler(async (req, res, next) => {
   order.status = req.body.status;
   await order.save();
 
-  res
-    .status(200)
-    .json({
-      message: `Order status updated to ${req.body.status}`,
-      status: order.status,
-      statusChangedAt: order.statusChangedAt,
-    });
+  res.status(200).json({
+    message: `Order status updated to ${req.body.status}`,
+    status: order.status,
+    statusChangedAt: order.statusChangedAt,
+  });
+});
+
+// @desc    Create Stripe checkout session for a cart
+// @route   POST /api/v1/orders/checkout-session/:cartId
+// @access  Protected/User
+export const createCheckoutSession = asyncHandler(async (req, res, next) => {
+  // app settings
+  const taxPrice = 0;
+  const shippingPrice = 0;
+
+  // 1) Get cart depend on cartId
+  const cart = await Cart.findById(req.params.cartId);
+  if (!cart) {
+    return next(
+      new ApiError(`There is no such cart with id ${req.params.cartId}`, 404)
+    );
+  }
+
+  // 2) Get order price depend on cart price "Check if coupon apply"
+  const cartPrice = cart.totalPriceAfterDiscount
+    ? cart.totalPriceAfterDiscount
+    : cart.totalCartPrice;
+
+  const totalOrderPrice = cartPrice + taxPrice + shippingPrice;
+
+  // 3) Create stripe checkout session
+  const session = await stripe.checkout.sessions.create({
+    line_items: [
+      {
+        price_data: {
+          currency: "egp",
+          unit_amount: totalOrderPrice * 100, // amount in cents
+          product_data: {
+            name: `Order by ${req.user.name}`,
+          },
+        },
+        quantity: 1,
+      },
+    ],
+    mode: "payment",
+    success_url: `${req.protocol}://${req.get("host")}/orders`,
+    cancel_url: `${req.protocol}://${req.get("host")}/cart`,
+    customer_email: req.user.email,
+    client_reference_id: req.params.cartId,
+    metadata: req.body.shippingAddress,
+  });
+
+  res.status(201).json({ status: "success", session });
 });

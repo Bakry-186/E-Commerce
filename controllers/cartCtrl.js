@@ -106,8 +106,6 @@ export const updateCartItemQuantity = asyncHandler(async (req, res, next) => {
     return next(new ApiError("Item not found in cart.", 404));
   }
 
-  let totalPrice = 0;
-
   cart.totalCartPrice = calculateTotalPrice(cart);
   await cart.save();
 
@@ -118,7 +116,7 @@ export const updateCartItemQuantity = asyncHandler(async (req, res, next) => {
 // @route   DELETE /api/v1/cart/:itemId
 // @access  Private/User
 export const deleteItem = asyncHandler(async (req, res, next) => {
-  const cart = await Cart.findOne({ user: req.user._id });
+  let cart = await Cart.findOne({ user: req.user._id });
   if (!cart) return next(new ApiError("Cart not found.", 404));
 
   const itemExists = cart.cartItems.some(
@@ -129,7 +127,7 @@ export const deleteItem = asyncHandler(async (req, res, next) => {
     return next(new ApiError("Item not found in cart.", 404));
   }
 
-  const updatedCart = await Cart.findOneAndUpdate(
+  cart = await Cart.findOneAndUpdate(
     { user: req.user._id },
     {
       $pull: { cartItems: { _id: req.params.itemId } },
@@ -137,19 +135,19 @@ export const deleteItem = asyncHandler(async (req, res, next) => {
     { new: true }
   );
 
-  if (!updatedCart.cartItems.length) {
+  if (!cart.cartItems.length) {
     await Cart.findOneAndDelete({ user: req.user._id });
     return res.status(200).json({
       message: "Item removed and cart deleted because it became empty.",
     });
   }
 
-  updatedCart.totalCartPrice = calculateTotalPrice(updatedCart);
+  cart.totalCartPrice = calculateTotalPrice(cart);
   await cart.save();
 
   res
     .status(200)
-    .json({ numOfItems: updatedCart.cartItems.length, data: updatedCart });
+    .json({ numOfItems: cart.cartItems.length, data: cart });
 });
 
 // @desc    Apply coupon on cart
