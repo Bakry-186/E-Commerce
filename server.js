@@ -10,6 +10,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
 import sanitizeHtml from "sanitize-html";
+import cors from "cors"
 
 import "./config/connect.js"; // Connect with db
 import ApiError from "./utils/apiError.js";
@@ -19,6 +20,9 @@ import mountRoutes from "./routes/index.js";
 
 // express app
 const app = express();
+
+// Enable other domains to access your application
+app.use(cors());
 
 // Use fileURLToPath to get the current directory path
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
