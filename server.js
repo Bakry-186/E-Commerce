@@ -10,7 +10,6 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
 import sanitizeHtml from "sanitize-html";
-import cors from "cors"
 
 import "./config/connect.js"; // Connect with db
 import ApiError from "./utils/apiError.js";
